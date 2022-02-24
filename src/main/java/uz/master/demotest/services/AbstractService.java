@@ -2,6 +2,7 @@ package uz.master.demotest.services;
 
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Component;
 import uz.master.demotest.mappers.Mapper;
 import uz.master.demotest.utils.BaseUtils;
 import uz.master.demotest.utils.Validator;
