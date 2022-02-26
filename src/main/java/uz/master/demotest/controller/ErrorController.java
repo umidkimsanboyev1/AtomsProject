@@ -10,13 +10,13 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class ErrorController implements org.springframework.boot.web.servlet.error.ErrorController {
 
-    @RequestMapping(value = "/error", method = RequestMethod.GET)
-    public String renderErrorPage(Model model, HttpServletRequest httpRequest) {
-        model.addAttribute("code", getErrorCode(httpRequest));
-        return "error/error";
-    }
-
-    private int getErrorCode(HttpServletRequest httpRequest) {
-        return (Integer) httpRequest.getAttribute("javax.servlet.error.status_code");
-    }
+//   ` @RequestMapping(value = "/error", method = RequestMethod.GET)
+//    public String renderErrorPage(Model model, HttpServletRequest httpRequest) {
+//        model.addAttribute("code", getErrorCode(httpRequest));
+//        return "error/error";
+//    }
+//
+//    private int getErrorCode(HttpServletRequest httpRequest) {
+//        return (Integer) httpRequest.getAttribute("javax.servlet.error.status_code");
+//    }`
 }

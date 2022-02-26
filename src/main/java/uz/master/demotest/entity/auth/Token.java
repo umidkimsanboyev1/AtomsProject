@@ -13,15 +13,13 @@ import java.time.LocalTime;
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(unique = true, nullable = false)
     protected Long id;
 
 
-    @Lob
     @Column(name = "private_token", nullable = false)
     private String privateToken;
 
-    @Column(name = "expire")
+    @Column(name = "expire",columnDefinition = "time default current_time+interval'5 minute'")
     private LocalTime expire;
 
 }

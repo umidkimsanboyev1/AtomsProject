@@ -14,32 +14,43 @@ import javax.mail.Transport;
 
 @Service
 public class SendEmail {
-
     public void sendEmail(String... args) {
         String recipient = args[0];
-        String sender = "Ibook2025com@gmail.com";
-        Properties prop = new Properties();
-        prop.put("mail.smtp.auth", true);
-        prop.put("mail.smtp.starttls.enable", "true");
-        prop.put("mail.smtp.host", "smtp.mailtrap.io");
-        prop.put("mail.smtp.port", "25");
-        prop.put("mail.smtp.ssl.trust", "smtp.mailtrap.io");
+        Properties properties=System.getProperties();
+        String host = "smtp.gmail.com";
+        String sender = "ibook2025com@gmail.com";
+        properties.put("mail.smtp.host", host);
+        properties.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.auth", "true");
 
-        Session session = Session.getDefaultInstance(prop,
+        Session session = Session.getDefaultInstance(properties,
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(sender,"lqgmrccwyrdbitph");
+                        return new PasswordAuthentication("ibook2025com@gmail.com","sokcrrlqangdxcmh");
                     }
                 });
 
         try {
+            // Create a default MimeMessage object.
             MimeMessage message = new MimeMessage(session);
 
-            message.setFrom(new InternetAddress(sender));
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
-            message.setSubject("password change");
-            message.setText("<a href="+args[1]+">enter<a>","text/html");
+            // Set From: header field of the header.
+            message.setFrom(new InternetAddress(recipient));
+
+            // Set To: header field of the header.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(sender));
+
+            // Set Subject: header field
+            message.setSubject("This is the Subject Line!");
+
+            // Now set the actual message
+            message.setContent("<a href='localhost:8080/auth/reset/" +args[1]+ "'>"+args[1]+"</a>","text/html; charset=utf-8");
+
+            System.out.println("sending...");
+            // Send message
             Transport.send(message);
+            System.out.println("Sent message successfully....");
         } catch (MessagingException mex) {
             mex.printStackTrace();
         }

@@ -1,15 +1,21 @@
 package uz.master.demotest.services.auth;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import uz.master.demotest.configs.security.UserDetails;
 import uz.master.demotest.dto.auth.AuthDto;
 import uz.master.demotest.dto.auth.AuthUserCreateDto;
 
 import uz.master.demotest.dto.auth.AuthUserUpdateDto;
+import uz.master.demotest.dto.auth.ResetPassword;
+import uz.master.demotest.entity.auth.AuthRole;
 import uz.master.demotest.entity.auth.AuthUser;
 import uz.master.demotest.entity.auth.Token;
 import uz.master.demotest.exceptions.NotFoundException;
 import uz.master.demotest.mappers.AuthUserMapper;
+import uz.master.demotest.repositories.AuthRoleRepository;
 import uz.master.demotest.repositories.AuthUserRepository;
 import uz.master.demotest.repositories.TokenRepository;
 import uz.master.demotest.services.AbstractService;
@@ -29,20 +35,28 @@ public class AuthUserService
         implements GenericService<AuthDto,Long>,
         GenericCrudService<AuthUser,AuthDto, AuthUserCreateDto, AuthUserUpdateDto,Long> {
     private final TokenRepository tokenRepository;
-
+   private final AuthRoleRepository roleRepository;
    private final  SendEmail email;
+   private final PasswordEncoder encoder;
     protected AuthUserService(AuthUserRepository repository,
                               AuthUserMapper mapper,
                               AuthUserValidator validator,
-                              TokenRepository tokenRepository, SendEmail email) {
+                              TokenRepository tokenRepository, AuthRoleRepository roleRepository, SendEmail email, PasswordEncoder encoder) {
         super(repository, mapper, validator);
         this.tokenRepository = tokenRepository;
+        this.roleRepository = roleRepository;
         this.email = email;
+        this.encoder = encoder;
     }
 
     @Override
     public Long create(AuthUserCreateDto createDto) {
-        return null;
+        AuthUser authUser = mapper.fromCreateDto(createDto);
+        AuthRole byId = roleRepository.getById(createDto.getUserRole());
+        authUser.setOrganizationId(((UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getOrganization());
+        authUser.setRole(byId);
+        authUser.setPassword(encoder.encode(createDto.getPassword()));
+        return repository.save(authUser).getId();
     }
 
     @Override
@@ -65,11 +79,16 @@ public class AuthUserService
         return null;
     }
 
-    public void sendMail(String emailUser,String username) throws NotFoundException {
+    public AuthUser get(String username) {
         Optional<AuthUser> authUserByUsername = repository.getAuthUserByUsername(username);
         if (authUserByUsername.isEmpty()){
             throw new NotFoundException("username not found");
-        }else if(Objects.nonNull(emailUser) &&emailUser.equals(authUserByUsername.get().getEmail())){
+        }
+        return authUserByUsername.get();
+    }
+
+    public void sendMail(String emailUser,String username) throws NotFoundException {
+       if(Objects.nonNull(emailUser) &&emailUser.equals(get(username).getEmail())){
             String tokenGenerate =UUID.randomUUID().toString().replace("-","");
             Token token=new Token();
             token.setPrivateToken(tokenGenerate);
@@ -77,5 +96,17 @@ public class AuthUserService
             email.sendEmail(emailUser,"localhost:8080/auth/reset/"+tokenGenerate);
         }
 
+    }
+
+    public boolean checkToken(String token) {
+        return !tokenRepository.findByPrivateToken(token).isEmpty();
+
+    }
+
+    // TODO: 2/26/2022 sh yerga yozib ketishim kerak validatorlarni
+    public void resetPassword(ResetPassword dto){
+        AuthUser authUser = get(dto.getUsername());
+        authUser.setPassword(encoder.encode(dto.getPassword()));
+        repository.save(authUser);
     }
 }
